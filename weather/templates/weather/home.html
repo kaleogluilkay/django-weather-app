@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Hava Durumu Uygulaması</title>
+    <link rel="stylesheet" href="{% static 'weather/style.css' %}">
+</head>
+<body {% if weather %} style="background: {{ weather.background }};" {% endif %}>
+    <h1>Hava Durumu Uygulaması</h1>
+
+    <!-- Şehir arama formu -->
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="city" placeholder="Şehir adı" required>
+        <button type="submit">Ara</button>
+    </form>
+
+    <!-- Hava durumu sonuçları -->
+    {% if weather %}
+        {% if weather.error %}
+            <p>{{ weather.error }}</p>
+        {% else %}
+            <div class="weather-box">
+                <h2>{{ weather.city }}</h2>
+                <p>Sıcaklık: {{ weather.temperature }}°C</p>
+                <p>Durum: {{ weather.description }}</p>
+                <img src="http://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Icon">
+            </div>
+
+            <!-- 5 Günlük Tahmin -->
+            {% if weather.forecast %}
+                <h3>5 Günlük Tahmin</h3>
+                <div style="display:flex; justify-content:center; gap:15px;">
+                    {% for f in weather.forecast %}
+                        <div class="weather-box">
+                            <p>{{ f.date|slice:":10" }}</p>
+                            <img src="http://openweathermap.org/img/wn/{{ f.icon }}@2x.png" alt="">
+                            <p>{{ f.temp }}°C</p>
+                            <p>{{ f.desc }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    <!-- JS ile kullanıcı konumunu alma -->
+    <script>
+    window.onload = () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                fetch(`/?lat=${lat}&lon=${lon}`)
+                    .then(() => location.reload())
+            });
+        }
+    };
+    </script>
+
+</body>
+</html>
